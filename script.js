@@ -32,6 +32,11 @@ let eaten = 0;
 let segmentArray = [];
 
 var startingX , startingY , movingX , movingY ;
+let xDown = null;
+let yDown = null;
+let xUp = null;
+let yUp = null;
+
 
 class snake{
     constructor(x,y){
@@ -245,50 +250,59 @@ document.addEventListener('keydown',function(e){
 // Touch Events for mobile
 gameBoard.addEventListener('touchstart',function touchStart(evt){
     evt.preventDefault();
-	startingX = evt.touches[0].clientX ;
-    startingY = evt.touches[0].clientY ;
+	xDown = evt.touches[0].clientX ;
+    yDown = evt.touches[0].clientY ;
 });
-gameBoard.addEventListener('touchend',function touchEnd(evt){
-    evt.preventDefault();
 
-    let x = 0;
-    let y = 0;
-    if(startingX+100 < movingX){
-        if(!isMovingLeft){
-            x = 1; y = 0;
-            isMovingRight = true;
-            isMovingUp = false;
-            isMovingDown = false;
-        }
-	} 
-    else if(startingX-100 > movingX){
-		if(!isMovingRight){
-            x = -1; y = 0;
-            isMovingLeft = true;
-            isMovingUp = false;
-            isMovingDown = false;
-        }   
-	}
-	if(startingY+100 < movingY){
-		if(!isMovingUp){
-            x = 0; y = 1;
-            isMovingDown = true;
-            isMovingLeft = false;
-            isMovingRight = false;
-            }
-	} 
-    else if(startingY-100 > movingY){
-		if(!isMovingDown){
-            x = 0; y = -1;
-            isMovingUp = true;
-            isMovingLeft = false;
-            isMovingRight = false;
-            }
-    }
-    update(x,y);
-});
 gameBoard.addEventListener('touchmove', function touchMove(evt){
     evt.preventDefault();
-    movingX = evt.touches[0].clientX ;
-    movingY = evt.touches[0].clientY ;
+    if(!xDown || !yDown)
+        return;
+
+    xUp = evt.touches[0].clientX ;
+    yUp = evt.touches[0].clientY ;
+
+    let xDiff = xDown - xUp;
+    let yDiff = yDown - yUp;
+    let x = 0; let y = 0;
+
+    if(Math.abs(xDiff) > Math.abs(yDiff)){
+        if(xDiff > 0){
+            if(!isMovingRight){
+                x = -1; y = 0;
+                isMovingLeft = true;
+                isMovingUp = false;
+                isMovingDown = false;
+            }   
+        }
+        else{
+            if(!isMovingLeft){
+                x = 1; y = 0;
+                isMovingRight = true;
+                isMovingUp = false;
+                isMovingDown = false;
+            }
+        }
+    }
+    else{
+        if(yDiff > 0){
+            if(!isMovingDown){
+                x = 0; y = -1;
+                isMovingUp = true;
+                isMovingLeft = false;
+                isMovingRight = false;
+                }
+        }
+        else{
+            if(!isMovingUp){
+                x = 0; y = 1;
+                isMovingDown = true;
+                isMovingLeft = false;
+                isMovingRight = false;
+                }
+        }
+    }
+    update(x,y);
+    xDown = null; yDown = null;
+    xUp = null; yUp = null;
 });
