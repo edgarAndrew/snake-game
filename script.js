@@ -37,12 +37,7 @@ let score = 0;
 let bestScore = 0;
 
 // 7.) Variables to handle swipe events 
-let xDown = null;
-let yDown = null;
-let xUp = null;
-let yUp = null;
-let xDiff = 0;
-let yDiff = 0;
+var startingX , startingY , movingX , movingY ;
 
 // 8.) Set Interval variables
 let deathChecker = 0;
@@ -289,64 +284,53 @@ document.addEventListener('keydown',function(e){
 });
 
 // 3.) Touch Events to handle swipes on Mobile devices
-
 gameBoard.addEventListener('touchstart',function touchStart(evt){
     evt.preventDefault();
-	xDown = evt.touches[0].clientX ;
-    yDown = evt.touches[0].clientY ;
+	startingX = evt.touches[0].clientX ;
+    startingY = evt.touches[0].clientY ;
 });
-
-gameBoard.addEventListener('touchmove', function touchMove(evt){
-    evt.preventDefault();
-    if(!xDown || !yDown)
-        return;
-
-    xUp = evt.touches[0].clientX ;
-    yUp = evt.touches[0].clientY ;
-    xDiff = xDown - xUp;
-    yDiff = yDown - yUp;
-
-    xDown = null; yDown = null;
-});
-
 gameBoard.addEventListener('touchend',function touchEnd(evt){
-    let x = 0; let y = 0;
+    evt.preventDefault();
 
-    if(Math.abs(xDiff) > Math.abs(yDiff)){
-        if(xDiff > 0){          // swipe left
-            if(!isMovingRight){
-                x = -1; y = 0;
-                isMovingLeft = true;
-                isMovingUp = false;
-                isMovingDown = false;
-            }   
+    let x = 0;
+    let y = 0;
+    
+    if(startingX+100 < movingX){
+        if(!isMovingLeft){
+            x = 1; y = 0;
+            isMovingRight = true;
+            isMovingUp = false;
+            isMovingDown = false;
         }
-        else{
-            if(!isMovingLeft){      // swipe right
-                x = 1; y = 0;
-                isMovingRight = true;
-                isMovingUp = false;
-                isMovingDown = false;
+	} 
+    else if(startingX-100 > movingX){
+		if(!isMovingRight){
+            x = -1; y = 0;
+            isMovingLeft = true;
+            isMovingUp = false;
+            isMovingDown = false;
+        }   
+	}
+	if(startingY+100 < movingY){
+		if(!isMovingUp){
+            x = 0; y = 1;
+            isMovingDown = true;
+            isMovingLeft = false;
+            isMovingRight = false;
             }
-        }
-    }
-    else{
-        if(yDiff > 0){
-            if(!isMovingDown){   // swipe up
-                x = 0; y = -1;
-                isMovingUp = true;
-                isMovingLeft = false;
-                isMovingRight = false;
-                }
-        }
-        else{
-            if(!isMovingUp){     // swipe down
-                x = 0; y = 1;
-                isMovingDown = true;
-                isMovingLeft = false;
-                isMovingRight = false;
-                }
-        }
+	} 
+    else if(startingY-100 > movingY){
+		if(!isMovingDown){
+            x = 0; y = -1;
+            isMovingUp = true;
+            isMovingLeft = false;
+            isMovingRight = false;
+            }
     }
     moveSnakeHead(x,y);
+});
+gameBoard.addEventListener('touchmove', function touchMove(evt){
+    evt.preventDefault();
+    movingX = evt.touches[0].clientX ;
+    movingY = evt.touches[0].clientY ;
 });
