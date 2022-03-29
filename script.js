@@ -211,7 +211,6 @@ function moveSnakeHead(x,y){
 function updateScore(){
     if(score > bestScore){
         bestScore = score;
-        console.log(menu.childNodes);
         menu.childNodes[5].innerHTML = `<h4>Best</h4>${bestScore}`;
     }
     scoreBoard.innerHTML = `<span>Score: ${score}</span>`;
