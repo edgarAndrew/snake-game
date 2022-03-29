@@ -1,43 +1,62 @@
+// Snake Game js script
+// Developed by Edgar Camelo, 2nd Year B.E Information Technology
+// Date: 28-03-2022
+
+// VARIABLES
+
+// 1.) DOM element variables
 const gameBoard = document.getElementById('game-board');
 const scoreBoard = document.getElementById('score');
 const playButton = document.querySelector('.play-btn');
 const menu = document.getElementById('menu');
-let food = null;
-
 const slider = document.getElementById("myRange");
 const sliderValue = document.getElementById("value");
+let food = null;
 
-let snakeSpeed = 3; // moves how many times a second
-
-let gridHeight = 21;
-let gridWidth = 21;
-
+// 2.) Boolean variables
 let isMovingUp = false;
 let isMovingDown = false;
 let isMovingLeft = false;
 let isMovingRight = false;
-
 let isSnakeHead = true;
 
+// 3.) Snake segments array
+let segmentArray = [];
+
+// 4.) Speed and grid varaibles
+let snakeSpeed = 3; 
+let gridHeight = 21;
+let gridWidth = 21;
+
+// 5.) Food Position variables
 let foodX = 0;
 let foodY = 0;
 
+// 6.) Game score varibles
 let score = 0;
 let bestScore = 0;
 
-let death = 0;
-let move = 0;
-let eaten = 0;
-
-let segmentArray = [];
-
-var startingX , startingY , movingX , movingY ;
+// 7.) Variables to handle swipe events 
 let xDown = null;
 let yDown = null;
 let xUp = null;
 let yUp = null;
+let xDiff = 0;
+let yDiff = 0;
 
+// 8.) Set Interval variables
+let deathChecker = 0;
+let snakeMotion = 0;
+let eatenChecker = 0;
 
+// AUDIO FILES
+const foodSound = new Audio('resources/apple-crunch.mp3');
+const moveSound = new Audio('resources/move-sound.mp3');
+const collisionSound = new Audio('resources/collision-sound.mp3');
+
+// TEMPLATE CLASS
+
+// Class to add segment to snake body 
 class snake{
     constructor(x,y){
         this.x = x;
@@ -50,25 +69,22 @@ class snake{
         appendage.style.gridColumnStart = this.x;
 
         if(isSnakeHead)
-            appendage.style.backgroundColor = 'darkRed';
+            appendage.style.backgroundColor = 'darkBlue';
 
         gameBoard.appendChild(appendage);
         isSnakeHead = false;
         segmentArray.push(this);
     }
 }
-const onSnake = (x,y) =>{
-    for(const item of segmentArray){
-        if(item.x === x && item.y === y)
-            return true;
-    }
-    return false;
-}
 
+// FUNCTIONS
+
+// 1.) Function to generate food at random location
 function foodGenerator(){
     if(food === null){
         food = document.createElement('div');
         food.classList.add('food');
+        food.innerHTML = `<img src="resources/apple-img.png" alt="apple-img" class="apple-img">`;
         gameBoard.appendChild(food);
     }
     let randx = Math.floor(Math.random() * (gridWidth - 1)) + 1;
@@ -83,96 +99,20 @@ function foodGenerator(){
     food.style.gridColumnStart = foodX;
 }
 
-function update(x,y){
-    if(x === 0 && y === 0)return;
-    else{
-        for(let i = segmentArray.length; i>=2;i--){
-            let segment = segmentArray[i-1].segment;
-            segmentArray[i-1].x = segmentArray[i-2].x;
-            segmentArray[i-1].y = segmentArray[i-2].y;
-    
-           // console.log(segment);
-            segment.style.gridRowStart = segmentArray[i-1].y;
-            segment.style.gridColumnStart = segmentArray[i-1].x;
-        }
-        segment = segmentArray[0].segment;
-        
-        segmentArray[0].x += x;
-        segmentArray[0].y += y;
-        segment.style.gridRowStart = segmentArray[0].y;
-        segment.style.gridColumnStart = segmentArray[0].x;
-    
-       // console.log(segmentArray[0]);
-    }
-}
-
-function moveSnake(){
-    if(isMovingRight){
-        update(1,0);
-    }
-    else if(isMovingLeft){
-        update(-1,0);
-    }
-    else if(isMovingUp){
-        update(0,-1);
-    }
-    else if(isMovingDown){
-        update(0,1);
-    }
-}
-
+// 2.) Function to check if food is eaten
 function foodEaten(){
     for(let item of segmentArray){
         if(item.x === foodX && item.y === foodY){
             addAppendage();
             foodGenerator();
             score++;
-            keepScore();
+            updateScore();
+            foodSound.play();
             break;
         }
     }
 }
-const biteSelf = (ele) =>{
-    if(ele !== segmentArray[0]){
-        if(ele.x === segmentArray[0].x && ele.y === segmentArray[0].y)
-            return true;
-    }
-    return false;
-}
-const hitBorder = (ele) =>{
-    return (ele.x < 1 || ele.x > gridWidth ||
-        ele.y < 1 || ele.y > gridHeight);
-}
-
-
-function checkDeath(){
-    if(segmentArray.some(biteSelf) || hitBorder(segmentArray[0])){
-        clearInterval(move);
-        clearInterval(death);
-        clearInterval(eaten);
-
-        for(let item of segmentArray){
-            item.segment.remove();
-        }
-        segmentArray.splice(0,segmentArray.length);
-
-        menu.style.zIndex = "1";
-        gameBoard.style.zIndex = "-1";
-    }
-}
-function keepScore(){
-    if(score > bestScore){
-        bestScore = score;
-        menu.childNodes[3].innerHTML = `<h3>Best</h3>${bestScore}`;
-    }
-    scoreBoard.innerHTML = `<span>Score: ${score}</span>`;
-    menu.childNodes[1].innerHTML = `<h3>Score</h3>${score}`;
-}
-slider.oninput = function() {
-    sliderValue.innerHTML = `<span>Speed : ${this.value}</span>`
-    snakeSpeed = this.value;
-} 
-
+// 3.) Function to add appendage to snake body
 function addAppendage(){
     let lastSegment = segmentArray[segmentArray.length - 1];
     let segment = null;
@@ -189,22 +129,124 @@ function addAppendage(){
         segment = new snake(lastSegment.x,lastSegment.y - 1);
     }
 }
+
+// 4.) Function to check if snake bit itself
+const biteSelf = (ele) =>{
+    if(ele !== segmentArray[0]){
+        if(ele.x === segmentArray[0].x && ele.y === segmentArray[0].y)
+            return true;
+    }
+    return false;
+}
+
+// 5.) Function to check if snake hit border
+const hitBorder = (ele) =>{
+    return (ele.x < 1 || ele.x > gridWidth ||
+        ele.y < 1 || ele.y > gridHeight);
+}
+
+// 6.) Function to check if snake died
+function checkDeath(){
+    if(segmentArray.some(biteSelf) || hitBorder(segmentArray[0])){
+        collisionSound.play();
+        clearInterval(snakeMotion);
+        clearInterval(deathChecker);
+        clearInterval(eatenChecker);
+
+        for(let item of segmentArray){
+            item.segment.remove();
+        }
+        segmentArray.splice(0,segmentArray.length);
+        updateScore();
+        menu.style.zIndex = "1";
+        gameBoard.style.zIndex = "-1";
+    }
+}
+// 7.) Function to check if grid(location) on snake body
+const onSnake = (x,y) =>{
+    for(const item of segmentArray){
+        if(item.x === x && item.y === y)
+            return true;
+    }
+    return false;
+}
+
+// 8.) Functions to move snake segments
+function moveSnake(){
+    if(isMovingRight){
+        moveSnakeHead(1,0);
+    }
+    else if(isMovingLeft){
+        moveSnakeHead(-1,0);
+    }
+    else if(isMovingUp){
+        moveSnakeHead(0,-1);
+    }
+    else if(isMovingDown){
+        moveSnakeHead(0,1);
+    }
+}
+
+function moveSnakeHead(x,y){
+    if(x === 0 && y === 0)return;
+    else{
+        for(let i = segmentArray.length; i>=2;i--){
+            let segment = segmentArray[i-1].segment;
+            segmentArray[i-1].x = segmentArray[i-2].x;
+            segmentArray[i-1].y = segmentArray[i-2].y;
+    
+            segment.style.gridRowStart = segmentArray[i-1].y;
+            segment.style.gridColumnStart = segmentArray[i-1].x;
+        }
+        segment = segmentArray[0].segment;
+        
+        segmentArray[0].x += x;
+        segmentArray[0].y += y;
+        segment.style.gridRowStart = segmentArray[0].y;
+        segment.style.gridColumnStart = segmentArray[0].x;
+    }
+}
+
+// 9.) Function to update game score
+function updateScore(){
+    if(score > bestScore){
+        bestScore = score;
+        console.log(menu.childNodes);
+        menu.childNodes[5].innerHTML = `<h4>Best</h4>${bestScore}`;
+    }
+    scoreBoard.innerHTML = `<span>Score: ${score}</span>`;
+    menu.childNodes[3].innerHTML = `<h4>Score</h4>${score}`;
+}
+
+// 10.) Function to set snakeSpeed
+slider.oninput = function() {
+    sliderValue.innerHTML = `<span>Speed : ${this.value}</span>`
+    snakeSpeed = this.value;
+} 
+
+// EVENT LISTENERS
+
+// 1.) Event Listener on play button on the menu
 playButton.addEventListener('click',(e)=>{
     e.stopPropagation();
     score = 0;
-    keepScore();
+    updateScore();
 
     menu.style.zIndex = "-1";
     gameBoard.style.zIndex = "1";
-    isSnakeHead = true;
-    let obj = new snake(10,10);
+    
+    isSnakeHead = true;          // first segment is head
+    let obj = new snake(10,10);  // starting position of snake
     foodGenerator();
 
-    death = setInterval(checkDeath,100);
-    move = setInterval(moveSnake,(1/snakeSpeed) * 1000);
-    eaten = setInterval(foodEaten,100);
+    deathChecker = setInterval(checkDeath,100);
+    snakeMotion = setInterval(moveSnake,(1/snakeSpeed) * 1000);
+    eatenChecker = setInterval(foodEaten,100);
 })
+
+// 2.) Event Listener to handle ArrowKey movements
 document.addEventListener('keydown',function(e){
+    moveSound.play();
     let x = 0;
     let y = 0;
     switch(e.key){
@@ -243,11 +285,12 @@ document.addEventListener('keydown',function(e){
             }
             break;
     }
-    update(x,y);
+    moveSnakeHead(x,y);
     e.preventDefault();
 });
 
-// Touch Events for mobile
+// 3.) Touch Events to handle swipes on Mobile devices
+
 gameBoard.addEventListener('touchstart',function touchStart(evt){
     evt.preventDefault();
 	xDown = evt.touches[0].clientX ;
@@ -261,13 +304,17 @@ gameBoard.addEventListener('touchmove', function touchMove(evt){
 
     xUp = evt.touches[0].clientX ;
     yUp = evt.touches[0].clientY ;
+    xDiff = xDown - xUp;
+    yDiff = yDown - yUp;
 
-    let xDiff = xDown - xUp;
-    let yDiff = yDown - yUp;
+    xDown = null; yDown = null;
+});
+
+gameBoard.addEventListener('touchend',function touchEnd(evt){
     let x = 0; let y = 0;
 
     if(Math.abs(xDiff) > Math.abs(yDiff)){
-        if(xDiff > 0){
+        if(xDiff > 0){          // swipe left
             if(!isMovingRight){
                 x = -1; y = 0;
                 isMovingLeft = true;
@@ -276,7 +323,7 @@ gameBoard.addEventListener('touchmove', function touchMove(evt){
             }   
         }
         else{
-            if(!isMovingLeft){
+            if(!isMovingLeft){      // swipe right
                 x = 1; y = 0;
                 isMovingRight = true;
                 isMovingUp = false;
@@ -286,7 +333,7 @@ gameBoard.addEventListener('touchmove', function touchMove(evt){
     }
     else{
         if(yDiff > 0){
-            if(!isMovingDown){
+            if(!isMovingDown){   // swipe up
                 x = 0; y = -1;
                 isMovingUp = true;
                 isMovingLeft = false;
@@ -294,7 +341,7 @@ gameBoard.addEventListener('touchmove', function touchMove(evt){
                 }
         }
         else{
-            if(!isMovingUp){
+            if(!isMovingUp){     // swipe down
                 x = 0; y = 1;
                 isMovingDown = true;
                 isMovingLeft = false;
@@ -302,7 +349,5 @@ gameBoard.addEventListener('touchmove', function touchMove(evt){
                 }
         }
     }
-    update(x,y);
-    xDown = null; yDown = null;
-    xUp = null; yUp = null;
+    moveSnakeHead(x,y);
 });
